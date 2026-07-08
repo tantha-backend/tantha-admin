@@ -1,4 +1,4 @@
-import { NavLink } from "react-router-dom";
+import { NavLink, Link } from "react-router-dom";
 import {
   LayoutDashboard,
   Music,
@@ -27,11 +27,13 @@ const menu = [
 
 function Sidebar() {
   return (
-    <aside className="w-60 min-h-screen border-r border-white/10 bg-black px-5 py-7">
+    <aside className="hidden min-h-screen w-60 shrink-0 border-r border-white/10 bg-black px-5 py-7 lg:block">
       <div className="mb-10">
-        <h1 className="text-4xl font-black tracking-tight text-white">
-          Tantha
-        </h1>
+        <Link to="/dashboard">
+          <h1 className="text-4xl font-black tracking-tight text-white transition hover:text-pink-500">
+            Tantha
+          </h1>
+        </Link>
       </div>
 
       <nav className="space-y-1">
@@ -40,14 +42,15 @@ function Sidebar() {
             key={label}
             to={path}
             className={({ isActive }) =>
-              `flex items-center gap-3 px-4 py-3 rounded-xl cursor-pointer transition ${
+              `flex cursor-pointer items-center gap-3 rounded-xl px-4 py-3 transition ${
                 isActive
-                  ? "bg-zinc-950 text-white border-l-4 border-pink-500"
+                  ? "border-l-4 border-pink-500 bg-zinc-950 text-white"
                   : "text-white/60 hover:bg-zinc-950 hover:text-white"
               }`
             }
           >
             <Icon size={20} />
+
             <span>{label}</span>
           </NavLink>
         ))}

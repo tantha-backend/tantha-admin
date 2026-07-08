@@ -1,5 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import toast from "react-hot-toast";
+
 import api from "../api/api";
 
 function Login() {
@@ -12,45 +14,61 @@ function Login() {
 
   const [loading, setLoading] = useState(false);
 
-  const handleChange = (e) => {
+  const handleChange = (event) => {
     setForm({
       ...form,
-      [e.target.name]: e.target.value,
+      [event.target.name]: event.target.value,
     });
   };
 
-  const handleLogin = async (e) => {
-    e.preventDefault();
+  const handleLogin = async (event) => {
+    event.preventDefault();
 
     try {
       setLoading(true);
 
       const res = await api.post("/auth/login", form);
+      const token = res.data?.token;
+      const user = res.data?.user;
 
-      localStorage.setItem("token", res.data.token);
-      localStorage.setItem("user", JSON.stringify(res.data.user));
+      if (!token || !user) {
+        toast.error("Invalid login response.");
+        return;
+      }
+
+      if (user.role !== "admin") {
+        toast.error("Unauthorized. Admin access only.");
+        return;
+      }
+
+      localStorage.setItem("token", token);
+      localStorage.setItem("user", JSON.stringify(user));
+
+      toast.success("Login successful.");
 
       navigate("/dashboard", { replace: true });
     } catch (error) {
-      alert(error.response?.data?.message || "Login failed");
+      toast.error(error.response?.data?.message || "Login failed.");
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="min-h-screen bg-black flex items-center justify-center px-4">
+    <div className="flex min-h-screen items-center justify-center bg-black px-4">
       <div className="card w-full max-w-md">
-        <h1 className="text-4xl font-bold text-pink-500 mb-2">TANTHA</h1>
+        <h1 className="mb-2 text-4xl font-bold text-pink-500">TANTHA</h1>
 
-        <h2 className="text-2xl font-bold mt-6">Admin Login</h2>
-        <p className="text-white/50 mt-1 mb-8">
+        <h2 className="mt-6 text-2xl font-bold">Admin Login</h2>
+
+        <p className="mb-8 mt-1 text-white/50">
           Login to manage Tantha Music dashboard.
         </p>
 
         <form onSubmit={handleLogin} className="space-y-5">
           <div>
             <label className="label">Email</label>
+
             <input
               className="input"
               type="email"
@@ -58,11 +76,13 @@ function Login() {
               value={form.email}
               onChange={handleChange}
               placeholder="Enter email"
+              required
             />
           </div>
 
           <div>
             <label className="label">Password</label>
+
             <input
               className="input"
               type="password"
@@ -70,13 +90,14 @@ function Login() {
               value={form.password}
               onChange={handleChange}
               placeholder="Enter password"
+              required
             />
           </div>
 
           <button
             type="submit"
             disabled={loading}
-            className="w-full bg-pink-500 hover:bg-pink-600 px-6 py-3 rounded-xl font-semibold disabled:opacity-50"
+            className="w-full rounded-xl bg-pink-500 px-6 py-3 font-semibold transition hover:bg-pink-600 disabled:cursor-not-allowed disabled:opacity-50"
           >
             {loading ? "Logging in..." : "Login"}
           </button>

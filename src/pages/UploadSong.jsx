@@ -1,289 +1,246 @@
 import { useEffect, useState } from "react";
-import { Upload, ArrowLeft } from "lucide-react";
-import api from "../api/api";
+import { useNavigate } from "react-router-dom";
+import toast from "react-hot-toast";
 
-function UploadSong() {
-  const [artists, setArtists] = useState([]);
-  const [loading, setLoading] = useState(false);
+import PageHeader from "../components/common/PageHeader";
+import Button from "../components/ui/Button";
 
-  const [form, setForm] = useState({
-    title: "",
-    artistId: "",
-    genre: "",
-    language: "",
-    duration: "",
-    lyrics: "",
-    isPremiumOnly: "false",
-  });
+import SongInformationForm from "../components/songs/SongInformationForm";
+import MediaUploadForm from "../components/songs/MediaUploadForm";
+import MonetizationSettings from "../components/songs/MonetizationSettings";
 
-  const [files, setFiles] = useState({
-    coverImage: null,
-    audio128: null,
-    audio320: null,
-  });
+import songService from "../services/songService";
+
+const initialFormData = {
+  title: "",
+  duration: "",
+  artist: "",
+  album: "",
+  genre: "",
+  language: "",
+  lyrics: "",
+  releaseDate: "",
+  coverImage: null,
+  audio128: null,
+  audio320: null,
+  premium: false,
+  coffee: true,
+  fanClub: true,
+  featured: false,
+  status: "pending",
+};
+
+const formatDuration = (seconds) => {
+  if (!seconds || Number.isNaN(seconds)) return "";
+
+  const minutes = Math.floor(seconds / 60);
+  const remainingSeconds = Math.floor(seconds % 60);
+
+  return `${minutes}:${remainingSeconds.toString().padStart(2, "0")}`;
+};
+
+const UploadSong = () => {
+  const navigate = useNavigate();
+
+  const [uploading, setUploading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
+  const [success, setSuccess] = useState(false);
+  const [errors, setErrors] = useState({});
+
+  const [formData, setFormData] = useState(initialFormData);
 
   useEffect(() => {
-    loadArtists();
-  }, []);
-
-  const loadArtists = async () => {
-    try {
-      const res = await api.get("/artists");
-      setArtists(res.data.artists || []);
-    } catch (error) {
-      console.log(error);
-      alert("Failed to load artists");
-    }
-  };
-
-  const handleChange = (e) => {
-    setForm({
-      ...form,
-      [e.target.name]: e.target.value,
-    });
-  };
-
-  const handleFileChange = (e) => {
-    setFiles({
-      ...files,
-      [e.target.name]: e.target.files[0],
-    });
-  };
-
-  const handleSubmit = async () => {
-    if (!form.title || !form.genre || !form.language || !form.duration) {
-      alert("Title, genre, language and duration are required");
-      return;
-    }
-
-    if (!files.audio128) {
-      alert("Audio 128kbps file is required");
-      return;
-    }
-
-    try {
-      setLoading(true);
-
-      const data = new FormData();
-
-      data.append("title", form.title);
-      data.append("artistId", form.artistId);
-      data.append("genre", form.genre);
-      data.append("language", form.language);
-      data.append("duration", form.duration);
-      data.append("lyrics", form.lyrics);
-      data.append("isPremiumOnly", form.isPremiumOnly);
-
-      if (files.coverImage) {
-        data.append("coverImage", files.coverImage);
-      }
-
-      if (files.audio128) {
-        data.append("audio128", files.audio128);
-      }
-
-      if (files.audio320) {
-        data.append("audio320", files.audio320);
-      }
-
-      await api.post("/songs/create", data);
-
-      alert("Song uploaded successfully");
-
-      setForm({
-        title: "",
-        artistId: "",
-        genre: "",
-        language: "",
+    if (!formData.audio128) {
+      setFormData((prev) => ({
+        ...prev,
         duration: "",
-        lyrics: "",
-        isPremiumOnly: "false",
+      }));
+      return;
+    }
+
+    const audioUrl = URL.createObjectURL(formData.audio128);
+    const audio = new Audio(audioUrl);
+
+    audio.addEventListener("loadedmetadata", () => {
+      const detectedDuration = formatDuration(audio.duration);
+
+      setFormData((prev) => ({
+        ...prev,
+        duration: detectedDuration,
+      }));
+    });
+
+    audio.addEventListener("error", () => {
+      setErrors((prev) => ({
+        ...prev,
+        audio128: "Could not detect audio duration",
+      }));
+    });
+
+    return () => {
+      URL.revokeObjectURL(audioUrl);
+    };
+  }, [formData.audio128]);
+
+  const validateForm = () => {
+    const newErrors = {};
+
+    if (!formData.title.trim()) {
+      newErrors.title = "Song title is required";
+    }
+
+    if (!formData.audio128) {
+      newErrors.audio128 = "Audio 128 kbps file is required";
+    }
+
+    if (formData.audio128 && !formData.duration.trim()) {
+      newErrors.audio128 = "Audio duration could not be detected";
+    }
+
+    if (!formData.artist) {
+      newErrors.artist = "Artist is required";
+    }
+
+    if (!formData.genre) {
+      newErrors.genre = "Genre is required";
+    }
+
+    if (!formData.language) {
+      newErrors.language = "Language is required";
+    }
+
+    setErrors(newErrors);
+
+    if (Object.keys(newErrors).length > 0) {
+      toast.error("Please fix the highlighted fields");
+      return false;
+    }
+
+    return true;
+  };
+
+  const clearError = (field) => {
+    setErrors((prev) => {
+      const updated = { ...prev };
+      delete updated[field];
+      return updated;
+    });
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+
+    if (!validateForm()) return;
+
+    const data = new FormData();
+
+    data.append("title", formData.title.trim());
+    data.append("duration", formData.duration.trim());
+    data.append("artistId", formData.artist);
+    data.append("genre", formData.genre);
+    data.append("language", formData.language);
+    data.append("lyrics", formData.lyrics || "");
+    data.append("isPremiumOnly", String(formData.premium));
+    data.append("audio128", formData.audio128);
+
+    if (formData.album) data.append("albumId", formData.album);
+    if (formData.audio320) data.append("audio320", formData.audio320);
+    if (formData.coverImage) data.append("coverImage", formData.coverImage);
+
+    try {
+      setUploading(true);
+      setUploadProgress(0);
+
+      await songService.uploadSong(data, (progressEvent) => {
+        if (!progressEvent.total) return;
+
+        const percent = Math.round(
+          (progressEvent.loaded * 100) / progressEvent.total,
+        );
+
+        setUploadProgress(percent);
       });
 
-      setFiles({
-        coverImage: null,
-        audio128: null,
-        audio320: null,
-      });
+      setSuccess(true);
+      toast.success("Song uploaded successfully");
+
+      setFormData(initialFormData);
+      setErrors({});
+      setUploadProgress(100);
+
+      setTimeout(() => {
+        navigate("/songs");
+      }, 1000);
     } catch (error) {
-      console.log("UPLOAD ERROR:", error.response?.data || error);
-
-      alert(
-        error.response?.data
-          ? JSON.stringify(error.response.data, null, 2)
-          : "Failed to upload song"
-      );
+      toast.error(error?.response?.data?.message || "Song upload failed");
     } finally {
-      setLoading(false);
+      setUploading(false);
     }
   };
 
   return (
-    <div>
-      <div className="flex items-center gap-3 mb-8">
-        <button className="w-10 h-10 rounded-xl bg-zinc-950 border border-white/10 flex items-center justify-center">
-          <ArrowLeft size={18} />
-        </button>
+    <form onSubmit={handleSubmit} className="space-y-6">
+      <PageHeader
+        title="Upload Song"
+        description="Add a new song to the Tantha Music platform."
+      />
 
-        <div>
-          <h1 className="text-3xl font-bold">Upload Song</h1>
-          <p className="text-white/50 mt-1">
-            Upload a new song and submit it for approval.
+      {success && (
+        <div className="rounded-2xl border border-green-500/30 bg-green-500/10 p-5">
+          <p className="text-sm font-medium text-green-400">
+            Song uploaded successfully. Redirecting to Songs...
           </p>
         </div>
-      </div>
+      )}
 
-      <div className="card max-w-5xl">
-        <div className="grid grid-cols-2 gap-5">
-          <Field
-            label="Song Title"
-            name="title"
-            value={form.title}
-            onChange={handleChange}
-            placeholder="Enter song title"
-          />
+      <SongInformationForm
+        formData={formData}
+        setFormData={setFormData}
+        errors={errors}
+        clearError={clearError}
+      />
 
-          <div>
-            <label className="label">Artist</label>
-            <select
-              className="input"
-              name="artistId"
-              value={form.artistId}
-              onChange={handleChange}
-            >
-              <option value="">Select Artist</option>
-              {artists.map((artist) => (
-                <option key={artist._id} value={artist._id}>
-                  {artist.stageName || artist.name}
-                </option>
-              ))}
-            </select>
+      <MediaUploadForm
+        formData={formData}
+        setFormData={setFormData}
+        errors={errors}
+        clearError={clearError}
+      />
+
+      <MonetizationSettings formData={formData} setFormData={setFormData} />
+
+      {uploading && (
+        <div className="rounded-2xl border border-zinc-800 bg-zinc-950 p-5">
+          <div className="mb-2 flex items-center justify-between">
+            <p className="text-sm font-medium text-white">Uploading song...</p>
+            <p className="text-sm text-zinc-400">{uploadProgress}%</p>
           </div>
 
-          <Field
-            label="Genre"
-            name="genre"
-            value={form.genre}
-            onChange={handleChange}
-            placeholder="Pop, Rock, Folk..."
-          />
-
-          <Field
-            label="Language"
-            name="language"
-            value={form.language}
-            onChange={handleChange}
-            placeholder="Manipuri, Hindi, English..."
-          />
-
-          <Field
-            label="Duration"
-            name="duration"
-            value={form.duration}
-            onChange={handleChange}
-            placeholder="240"
-          />
-
-          <div>
-            <label className="label">Premium Only</label>
-            <select
-              className="input"
-              name="isPremiumOnly"
-              value={form.isPremiumOnly}
-              onChange={handleChange}
-            >
-              <option value="false">No</option>
-              <option value="true">Yes</option>
-            </select>
-          </div>
-
-          <div className="col-span-2">
-            <label className="label">Lyrics</label>
-            <textarea
-              className="input min-h-32"
-              name="lyrics"
-              value={form.lyrics}
-              onChange={handleChange}
-              placeholder="Enter lyrics..."
+          <div className="h-2 w-full overflow-hidden rounded-full bg-zinc-800">
+            <div
+              className="h-full rounded-full bg-pink-600 transition-all"
+              style={{ width: `${uploadProgress}%` }}
             />
           </div>
         </div>
+      )}
 
-        <div className="grid grid-cols-3 gap-5 mt-8">
-          <UploadBox
-            title="Cover Image"
-            name="coverImage"
-            file={files.coverImage}
-            onChange={handleFileChange}
-          />
+      <div className="flex justify-end gap-3">
+        <Button
+          type="button"
+          variant="secondary"
+          onClick={() => navigate("/songs")}
+          disabled={uploading}
+        >
+          Cancel
+        </Button>
 
-          <UploadBox
-            title="Audio 128kbps"
-            name="audio128"
-            file={files.audio128}
-            onChange={handleFileChange}
-          />
-
-          <UploadBox
-            title="Audio 320kbps"
-            name="audio320"
-            file={files.audio320}
-            onChange={handleFileChange}
-          />
-        </div>
-
-        <div className="flex justify-end gap-3 mt-8">
-          <button className="btn" disabled={loading}>
-            Save Draft
-          </button>
-
-          <button
-            onClick={handleSubmit}
-            disabled={loading}
-            className="bg-pink-500 hover:bg-pink-600 px-6 py-3 rounded-xl font-semibold disabled:opacity-50"
-          >
-            {loading ? "Uploading..." : "Submit Song"}
-          </button>
-        </div>
+        <Button type="submit" disabled={uploading || success}>
+          {uploading ? `Uploading ${uploadProgress}%` : "Upload Song"}
+        </Button>
       </div>
-    </div>
+    </form>
   );
-}
-
-function Field({ label, name, value, onChange, placeholder }) {
-  return (
-    <div>
-      <label className="label">{label}</label>
-      <input
-        className="input"
-        name={name}
-        value={value}
-        onChange={onChange}
-        placeholder={placeholder}
-      />
-    </div>
-  );
-}
-
-function UploadBox({ title, name, file, onChange }) {
-  return (
-    <label className="border border-dashed border-white/15 rounded-2xl p-6 h-40 flex flex-col items-center justify-center text-center hover:border-pink-500 transition cursor-pointer">
-      <Upload className="text-pink-500 mb-3" size={28} />
-
-      <p className="font-medium">{title}</p>
-
-      <p className="text-xs text-white/40 mt-1">
-        {file ? file.name : "Click to upload file"}
-      </p>
-
-      <input
-        type="file"
-        name={name}
-        onChange={onChange}
-        className="hidden"
-      />
-    </label>
-  );
-}
+};
 
 export default UploadSong;
