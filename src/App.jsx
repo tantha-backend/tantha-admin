@@ -13,6 +13,7 @@ import Approvals from "./pages/Approvals";
 import Artists from "./pages/Artists";
 import CreateArtist from "./pages/CreateArtist";
 import ArtistDetails from "./pages/ArtistDetails";
+import EditArtist from "./pages/EditArtist";
 
 import Albums from "./pages/Albums";
 import CreateAlbum from "./pages/CreateAlbum";
@@ -20,10 +21,13 @@ import EditAlbum from "./pages/EditAlbum";
 import AlbumDetails from "./pages/AlbumDetails";
 
 import Users from "./pages/Users";
+import CreateUser from "./pages/CreateUser";
 import UserDetails from "./pages/UserDetails";
 import EditUser from "./pages/EditUser";
 
 import Playlists from "./pages/Playlists";
+import CreatePlaylist from "./pages/CreatePlaylist";
+import PlaylistDetails from "./pages/PlaylistDetails";
 import Analytics from "./pages/Analytics";
 import Monetization from "./pages/Monetization";
 import Settings from "./pages/Settings";
@@ -55,6 +59,7 @@ const App = () => {
           <Route path="artists" element={<Artists />} />
           <Route path="artists/create" element={<CreateArtist />} />
           <Route path="artists/:id" element={<ArtistDetails />} />
+          <Route path="artists/:id/edit" element={<EditArtist />} />
 
           <Route path="albums" element={<Albums />} />
           <Route path="albums/create" element={<CreateAlbum />} />
@@ -62,10 +67,14 @@ const App = () => {
           <Route path="albums/:id/edit" element={<EditAlbum />} />
 
           <Route path="users" element={<Users />} />
+          <Route path="users/create" element={<CreateUser />} />
           <Route path="users/:id" element={<UserDetails />} />
           <Route path="users/:id/edit" element={<EditUser />} />
 
           <Route path="playlists" element={<Playlists />} />
+          <Route path="playlists/create" element={<CreatePlaylist />} />
+          <Route path="playlists/:id" element={<PlaylistDetails />} />
+
           <Route path="analytics" element={<Analytics />} />
           <Route path="monetization" element={<Monetization />} />
           <Route path="settings" element={<Settings />} />

@@ -1,3 +1,5 @@
+import Button from "../ui/Button";
+
 const PageHeader = ({
   title,
   description,
@@ -5,6 +7,9 @@ const PageHeader = ({
   action,
   children,
   className = "",
+  actionLabel,
+  actionIcon: ActionIcon,
+  onAction,
 }) => {
   const finalDescription = description || subtitle;
 
@@ -20,9 +25,14 @@ const PageHeader = ({
         )}
       </div>
 
-      {(action || children) && (
+      {(action || children || actionLabel) && (
         <div className="flex flex-wrap items-center gap-3">
-          {action || children}
+          {action || children || (
+            <Button type="button" onClick={onAction}>
+              {ActionIcon && <ActionIcon size={18} />}
+              {actionLabel}
+            </Button>
+          )}
         </div>
       )}
     </div>

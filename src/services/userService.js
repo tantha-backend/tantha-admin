@@ -6,6 +6,11 @@ const userService = {
     return res.data;
   },
 
+  createUser: async (data) => {
+    const res = await api.post("/admin/users/create", data);
+    return res.data;
+  },
+
   getUserById: async (id) => {
     const res = await api.get(`/admin/users/${id}`);
     return res.data;

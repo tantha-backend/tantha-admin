@@ -32,11 +32,7 @@ const initialFormData = {
 
 const formatDuration = (seconds) => {
   if (!seconds || Number.isNaN(seconds)) return "";
-
-  const minutes = Math.floor(seconds / 60);
-  const remainingSeconds = Math.floor(seconds % 60);
-
-  return `${minutes}:${remainingSeconds.toString().padStart(2, "0")}`;
+  return Math.floor(seconds);
 };
 
 const UploadSong = () => {
@@ -93,7 +89,7 @@ const UploadSong = () => {
       newErrors.audio128 = "Audio 128 kbps file is required";
     }
 
-    if (formData.audio128 && !formData.duration.trim()) {
+    if (formData.audio128 && !formData.duration) {
       newErrors.audio128 = "Audio duration could not be detected";
     }
 
@@ -135,7 +131,7 @@ const UploadSong = () => {
     const data = new FormData();
 
     data.append("title", formData.title.trim());
-    data.append("duration", formData.duration.trim());
+    data.append("duration", String(formData.duration));
     data.append("artistId", formData.artist);
     data.append("genre", formData.genre);
     data.append("language", formData.language);
@@ -145,7 +141,9 @@ const UploadSong = () => {
 
     if (formData.album) data.append("albumId", formData.album);
     if (formData.audio320) data.append("audio320", formData.audio320);
-    if (formData.coverImage) data.append("coverImage", formData.coverImage);
+
+    // Backend Multer expects this field name as "cover"
+    if (formData.coverImage) data.append("cover", formData.coverImage);
 
     try {
       setUploading(true);

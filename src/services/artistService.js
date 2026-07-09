@@ -32,22 +32,12 @@ const artistService = {
   },
 
   createArtist: async (formData) => {
-    const res = await api.post("/admin/artists", formData, {
-      headers: {
-        "Content-Type": "multipart/form-data",
-      },
-    });
-
+    const res = await api.post("/admin/artists/create", formData);
     return res.data;
   },
 
-  updateArtist: async (id, formData) => {
-    const res = await api.put(`/admin/artists/${id}`, formData, {
-      headers: {
-        "Content-Type": "multipart/form-data",
-      },
-    });
-
+  updateArtist: async (id, data) => {
+    const res = await api.put(`/admin/artists/${id}`, data);
     return res.data;
   },
 
