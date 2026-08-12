@@ -14,15 +14,12 @@ import CoverImage from "../../components/media/CoverImage";
 import AudioPlayer from "../../components/media/AudioPlayer";
 import StatusBadge from "../../components/table/StatusBadge";
 import Button from "../../components/ui/Button";
+import { songCredit } from "../../utils/artists";
 
 const SongDetailsDrawer = ({ song, open, onClose, onEdit, onDelete }) => {
   if (!open || !song) return null;
 
-  const artistName =
-    song?.artistId?.name ||
-    song?.artist?.name ||
-    song?.artistName ||
-    "Unknown Artist";
+  const artistName = songCredit(song);
 
   const albumName =
     song?.albumId?.title ||
@@ -69,7 +66,7 @@ const SongDetailsDrawer = ({ song, open, onClose, onEdit, onDelete }) => {
                 <StatusBadge status={song.status} />
               </div>
 
-              {song.audio128 && <AudioPlayer src={song.audio128} />}
+              {song.audio320 && <AudioPlayer src={song.audio320} />}
             </div>
           </div>
 

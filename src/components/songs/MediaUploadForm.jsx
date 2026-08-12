@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
 import { useDropzone } from "react-dropzone";
-import { Image, Music2, Upload, X } from "lucide-react";
+import { Image, Music2, X } from "lucide-react";
+
+import { formatDuration } from "../../utils/time";
 
 const formatFileSize = (bytes) => {
   if (!bytes) return "";
@@ -79,7 +81,7 @@ const FileInfo = ({ file, duration, previewUrl, onRemove }) => {
 
           <p className="mt-1 text-xs text-zinc-500">
             {formatFileSize(file.size)}
-            {duration ? ` • ${duration}` : ""}
+            {duration ? ` • ${formatDuration(duration)}` : ""}
           </p>
         </div>
 
@@ -134,9 +136,10 @@ const MediaUploadForm = ({
   setFormData,
   errors = {},
   clearError,
+  // Editing an existing song keeps its current files unless new ones are picked.
+  audioRequired = true,
 }) => {
   const [coverPreviewUrl, setCoverPreviewUrl] = useState("");
-  const [audio128PreviewUrl, setAudio128PreviewUrl] = useState("");
   const [audio320PreviewUrl, setAudio320PreviewUrl] = useState("");
 
   useEffect(() => {
@@ -152,20 +155,6 @@ const MediaUploadForm = ({
       URL.revokeObjectURL(imageUrl);
     };
   }, [formData.coverImage]);
-
-  useEffect(() => {
-    if (!formData.audio128) {
-      setAudio128PreviewUrl("");
-      return;
-    }
-
-    const audioUrl = URL.createObjectURL(formData.audio128);
-    setAudio128PreviewUrl(audioUrl);
-
-    return () => {
-      URL.revokeObjectURL(audioUrl);
-    };
-  }, [formData.audio128]);
 
   useEffect(() => {
     if (!formData.audio320) {
@@ -186,7 +175,7 @@ const MediaUploadForm = ({
 
     if (clearError) clearError(field);
 
-    if (field === "audio128" && clearError) {
+    if (field === "audio320" && clearError) {
       clearError("duration");
     }
 
@@ -200,7 +189,7 @@ const MediaUploadForm = ({
     setFormData((prev) => ({
       ...prev,
       [field]: null,
-      ...(field === "audio128" ? { duration: "" } : {}),
+      ...(field === "audio320" ? { duration: "" } : {}),
     }));
   };
 
@@ -210,7 +199,7 @@ const MediaUploadForm = ({
         <h2 className="text-xl font-semibold text-white">Media Upload</h2>
 
         <p className="mt-1 text-sm text-zinc-400">
-          Upload the cover artwork and audio files.
+          Upload the cover artwork and audio file.
         </p>
       </div>
 
@@ -244,40 +233,17 @@ const MediaUploadForm = ({
 
         <div>
           <label className="mb-3 block text-sm font-medium text-zinc-300">
-            Audio 128 kbps *
+            Audio 320 kbps {audioRequired ? "*" : ""}
           </label>
 
           <UploadDropzone
             icon={<Music2 size={42} />}
             title="Drop MP3 here or click to upload"
-            description="Required • MP3 audio"
-            accept={{
-              "audio/mpeg": [".mp3"],
-              "audio/*": [],
-            }}
-            hasError={Boolean(errors.audio128)}
-            onFileSelect={(file) => handleFileChange("audio128", file)}
-          />
-
-          <FileInfo
-            file={formData.audio128}
-            duration={formData.duration}
-            previewUrl={audio128PreviewUrl}
-            onRemove={() => removeFile("audio128")}
-          />
-
-          <ErrorText message={errors.audio128} />
-        </div>
-
-        <div>
-          <label className="mb-3 block text-sm font-medium text-zinc-300">
-            Audio 320 kbps
-          </label>
-
-          <UploadDropzone
-            icon={<Upload size={42} />}
-            title="Drop high quality MP3 here"
-            description="Optional • MP3 audio"
+            description={
+              audioRequired
+                ? "Required • MP3 audio"
+                : "Optional • replaces the current audio"
+            }
             accept={{
               "audio/mpeg": [".mp3"],
               "audio/*": [],
@@ -288,6 +254,7 @@ const MediaUploadForm = ({
 
           <FileInfo
             file={formData.audio320}
+            duration={formData.duration}
             previewUrl={audio320PreviewUrl}
             onRemove={() => removeFile("audio320")}
           />

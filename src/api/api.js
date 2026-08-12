@@ -22,6 +22,17 @@ api.interceptors.request.use(
       config.headers.Authorization = `Bearer ${token}`;
     }
 
+    /**
+     * File uploads must go out as multipart. The instance sets a default
+     * Content-Type of application/json, and axios will not override a header
+     * that is already set — so a FormData body would be sent labelled as JSON,
+     * with no boundary for multer to parse, and every file would be dropped
+     * server-side. Clearing it lets axios fill in the correct value.
+     */
+    if (typeof FormData !== "undefined" && config.data instanceof FormData) {
+      delete config.headers["Content-Type"];
+    }
+
     return config;
   },
   (error) => Promise.reject(error),

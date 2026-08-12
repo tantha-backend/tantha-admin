@@ -33,6 +33,7 @@ import CoverImage from "../components/media/CoverImage";
 import AudioPlayer from "../components/media/AudioPlayer";
 import SongDetailsDrawer from "../features/songs/SongDetailsDrawer";
 import songService from "../services/songService";
+import { songCredit } from "../utils/artists";
 
 const PAGE_SIZE = 10;
 
@@ -54,35 +55,8 @@ const getAccessType = (song) => {
   return song?.isPremium || song?.isPremiumOnly ? "premium" : "free";
 };
 
-const getAudioSource = (song) => {
-  return (
-    song?.audio128 ||
-    song?.audio320 ||
-    song?.audioUrl ||
-    song?.audioURL ||
-    song?.audio ||
-    song?.audioFile ||
-    song?.songUrl ||
-    song?.songURL ||
-    song?.fileUrl ||
-    song?.fileURL ||
-    song?.mediaUrl ||
-    song?.mediaURL ||
-    song?.files?.audio128 ||
-    song?.files?.audio320 ||
-    song?.files?.audio ||
-    song?.media?.audio128 ||
-    song?.media?.audio320 ||
-    song?.media?.audio ||
-    song?.urls?.audio128 ||
-    song?.urls?.audio320 ||
-    song?.urls?.audio ||
-    song?.s3?.audio128 ||
-    song?.s3?.audio320 ||
-    song?.s3?.audio ||
-    ""
-  );
-};
+// Songs carry a single 320kbps file; `streamUrl` is the play endpoint's alias.
+const getAudioSource = (song) => song?.audio320 || song?.streamUrl || "";
 
 const Songs = () => {
   const navigate = useNavigate();
@@ -109,18 +83,8 @@ const Songs = () => {
     return new Intl.NumberFormat("en-IN").format(Number(value || 0));
   };
 
-  const getArtistName = (song) => {
-    return (
-      song?.artistId?.stageName ||
-      song?.artistId?.artistName ||
-      song?.artistId?.name ||
-      song?.artist?.stageName ||
-      song?.artist?.artistName ||
-      song?.artist?.name ||
-      song?.artistName ||
-      "Unknown Artist"
-    );
-  };
+  // Shows collaborators too: "Artist A feat. B, C".
+  const getArtistName = (song) => songCredit(song);
 
   const getAlbumName = (song) => {
     return (
@@ -251,8 +215,7 @@ const Songs = () => {
   };
 
   const handleEditSong = (song) => {
-    console.log("Edit song:", song);
-    toast("Song edit screen will be connected next.");
+    navigate(`/songs/${song._id}/edit`);
   };
 
   const handleSongAnalytics = (song) => {

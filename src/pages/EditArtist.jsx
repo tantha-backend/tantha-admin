@@ -15,10 +15,13 @@ const EditArtist = () => {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
 
+  // Newly picked files, and what to show in the preview — either the existing
+  // stored image or a local object URL for a file just chosen.
+  const [images, setImages] = useState({ profileImage: null, coverImage: null });
+  const [previews, setPreviews] = useState({ profileImage: "", coverImage: "" });
+
   const [formData, setFormData] = useState({
     stageName: "",
-    artistName: "",
-    genre: "",
     bio: "",
     facebook: "",
     instagram: "",
@@ -38,8 +41,6 @@ const EditArtist = () => {
 
       setFormData({
         stageName: artist.stageName || "",
-        artistName: artist.artistName || "",
-        genre: artist.genre || "",
         bio: artist.bio || "",
         facebook: artist.socialLinks?.facebook || "",
         instagram: artist.socialLinks?.instagram || "",
@@ -48,6 +49,11 @@ const EditArtist = () => {
         isVerified: Boolean(artist.isVerified),
         isMonetized: Boolean(artist.isMonetized),
         fanClubPrice: artist.fanClubPrice ?? 99,
+      });
+
+      setPreviews({
+        profileImage: artist.profileImage || "",
+        coverImage: artist.coverImage || "",
       });
     } catch (error) {
       toast.error("Failed to load artist");
@@ -68,6 +74,13 @@ const EditArtist = () => {
     }));
   };
 
+  const handleImageChange = (field, file) => {
+    if (!file) return;
+
+    setImages((prev) => ({ ...prev, [field]: file }));
+    setPreviews((prev) => ({ ...prev, [field]: URL.createObjectURL(file) }));
+  };
+
   const handleSubmit = async (event) => {
     event.preventDefault();
 
@@ -79,21 +92,33 @@ const EditArtist = () => {
     try {
       setSaving(true);
 
-      const payload = {
-        stageName: formData.stageName.trim(),
-        artistName: formData.artistName.trim(),
-        genre: formData.genre.trim(),
-        bio: formData.bio.trim(),
-        isVerified: formData.isVerified,
-        isMonetized: formData.isMonetized,
-        fanClubPrice: Number(formData.fanClubPrice || 99),
-        socialLinks: {
-          facebook: formData.facebook,
-          instagram: formData.instagram,
-          youtube: formData.youtube,
-          spotify: formData.spotify,
-        },
-      };
+      // Multipart so the images can travel with the rest of the fields.
+      const payload = new FormData();
+
+      payload.append("stageName", formData.stageName.trim());
+      payload.append("bio", formData.bio.trim());
+      payload.append("isVerified", String(formData.isVerified));
+      payload.append("isMonetized", String(formData.isMonetized));
+      payload.append("fanClubPrice", String(Number(formData.fanClubPrice || 99)));
+
+      // Multipart can't carry a nested object, so send it as JSON.
+      payload.append(
+        "socialLinks",
+        JSON.stringify({
+          facebook: formData.facebook.trim(),
+          instagram: formData.instagram.trim(),
+          youtube: formData.youtube.trim(),
+          spotify: formData.spotify.trim(),
+        }),
+      );
+
+      if (images.profileImage) {
+        payload.append("profileImage", images.profileImage);
+      }
+
+      if (images.coverImage) {
+        payload.append("coverImage", images.coverImage);
+      }
 
       await artistService.updateArtist(id, payload);
 
@@ -142,28 +167,6 @@ const EditArtist = () => {
 
           <div>
             <label className="mb-2 block text-sm font-medium text-white">
-              Artist Name
-            </label>
-            <input
-              value={formData.artistName}
-              onChange={(e) => handleChange("artistName", e.target.value)}
-              className="w-full rounded-xl border border-white/10 bg-black px-4 py-3 text-sm text-white outline-none focus:border-pink-500"
-            />
-          </div>
-
-          <div>
-            <label className="mb-2 block text-sm font-medium text-white">
-              Genre
-            </label>
-            <input
-              value={formData.genre}
-              onChange={(e) => handleChange("genre", e.target.value)}
-              className="w-full rounded-xl border border-white/10 bg-black px-4 py-3 text-sm text-white outline-none focus:border-pink-500"
-            />
-          </div>
-
-          <div>
-            <label className="mb-2 block text-sm font-medium text-white">
               Fan Club Price
             </label>
             <input
@@ -185,6 +188,74 @@ const EditArtist = () => {
             onChange={(e) => handleChange("bio", e.target.value)}
             className="w-full resize-none rounded-xl border border-white/10 bg-black px-4 py-3 text-sm text-white outline-none focus:border-pink-500"
           />
+        </div>
+      </SectionCard>
+
+      <SectionCard title="Artist Images">
+        <div className="grid gap-5 md:grid-cols-2">
+          <div>
+            <label className="mb-2 block text-sm font-medium text-white">
+              Profile Image
+            </label>
+
+            <div className="rounded-xl border border-dashed border-white/10 bg-black p-4">
+              {previews.profileImage ? (
+                <img
+                  src={previews.profileImage}
+                  alt="Profile preview"
+                  className="mb-4 h-32 w-32 rounded-full object-cover"
+                />
+              ) : (
+                <div className="mb-4 flex h-32 w-32 items-center justify-center rounded-full bg-pink-500 text-4xl font-bold text-white">
+                  {formData.stageName?.charAt(0)?.toUpperCase() || "A"}
+                </div>
+              )}
+
+              <input
+                type="file"
+                accept="image/*"
+                onChange={(e) =>
+                  handleImageChange("profileImage", e.target.files?.[0])
+                }
+                className="block w-full text-sm text-white/60 file:mr-4 file:rounded-lg file:border-0 file:bg-pink-500 file:px-4 file:py-2 file:text-sm file:font-medium file:text-white hover:file:bg-pink-600"
+              />
+
+              <p className="mt-2 text-xs text-white/40">
+                Square images look best. Replaces the current picture.
+              </p>
+            </div>
+          </div>
+
+          <div>
+            <label className="mb-2 block text-sm font-medium text-white">
+              Cover Image
+            </label>
+
+            <div className="rounded-xl border border-dashed border-white/10 bg-black p-4">
+              {previews.coverImage ? (
+                <img
+                  src={previews.coverImage}
+                  alt="Cover preview"
+                  className="mb-4 h-32 w-full rounded-xl object-cover"
+                />
+              ) : (
+                <div className="mb-4 h-32 w-full rounded-xl bg-gradient-to-r from-pink-500/30 to-indigo-500/30" />
+              )}
+
+              <input
+                type="file"
+                accept="image/*"
+                onChange={(e) =>
+                  handleImageChange("coverImage", e.target.files?.[0])
+                }
+                className="block w-full text-sm text-white/60 file:mr-4 file:rounded-lg file:border-0 file:bg-pink-500 file:px-4 file:py-2 file:text-sm file:font-medium file:text-white hover:file:bg-pink-600"
+              />
+
+              <p className="mt-2 text-xs text-white/40">
+                Wide banner shown at the top of the artist page.
+              </p>
+            </div>
+          </div>
         </div>
       </SectionCard>
 

@@ -2,6 +2,8 @@ import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
 
 import api from "../api/api";
+import { formatDuration } from "../utils/time";
+import { songCredit } from "../utils/artists";
 
 const Approvals = () => {
   const [songs, setSongs] = useState([]);
@@ -195,7 +197,8 @@ const Approvals = () => {
                           </p>
 
                           <p className="text-xs text-zinc-500">
-                            {song.duration || 0}s · {song.playCount || 0}{" "}
+                            {formatDuration(song.duration)} ·{" "}
+                            {song.playCount || 0}{" "}
                             streams
                           </p>
                         </div>
@@ -203,9 +206,7 @@ const Approvals = () => {
                     </td>
 
                     <td className="px-5 py-4 text-sm text-zinc-300">
-                      {song.artistId?.stageName ||
-                        song.artistId?.artistName ||
-                        "Unknown Artist"}
+                      {songCredit(song)}
                     </td>
 
                     <td className="px-5 py-4 text-sm text-zinc-400">
@@ -229,9 +230,9 @@ const Approvals = () => {
                     </td>
 
                     <td className="px-5 py-4">
-                      {song.audio128 ? (
+                      {song.audio320 ? (
                         <audio controls className="h-9 w-48">
-                          <source src={song.audio128} />
+                          <source src={song.audio320} />
                         </audio>
                       ) : (
                         <span className="text-xs text-zinc-600">No audio</span>

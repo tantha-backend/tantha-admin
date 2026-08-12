@@ -10,6 +10,7 @@ import MediaUploadForm from "../components/songs/MediaUploadForm";
 import MonetizationSettings from "../components/songs/MonetizationSettings";
 
 import songService from "../services/songService";
+import { toDurationSeconds } from "../utils/time";
 
 const initialFormData = {
   title: "",
@@ -20,19 +21,14 @@ const initialFormData = {
   language: "",
   lyrics: "",
   releaseDate: "",
+  featuredArtists: [],
   coverImage: null,
-  audio128: null,
   audio320: null,
   premium: false,
   coffee: true,
   fanClub: true,
   featured: false,
   status: "pending",
-};
-
-const formatDuration = (seconds) => {
-  if (!seconds || Number.isNaN(seconds)) return "";
-  return Math.floor(seconds);
 };
 
 const UploadSong = () => {
@@ -46,7 +42,7 @@ const UploadSong = () => {
   const [formData, setFormData] = useState(initialFormData);
 
   useEffect(() => {
-    if (!formData.audio128) {
+    if (!formData.audio320) {
       setFormData((prev) => ({
         ...prev,
         duration: "",
@@ -54,29 +50,27 @@ const UploadSong = () => {
       return;
     }
 
-    const audioUrl = URL.createObjectURL(formData.audio128);
+    const audioUrl = URL.createObjectURL(formData.audio320);
     const audio = new Audio(audioUrl);
 
     audio.addEventListener("loadedmetadata", () => {
-      const detectedDuration = formatDuration(audio.duration);
-
       setFormData((prev) => ({
         ...prev,
-        duration: detectedDuration,
+        duration: toDurationSeconds(audio.duration),
       }));
     });
 
     audio.addEventListener("error", () => {
       setErrors((prev) => ({
         ...prev,
-        audio128: "Could not detect audio duration",
+        audio320: "Could not detect audio duration",
       }));
     });
 
     return () => {
       URL.revokeObjectURL(audioUrl);
     };
-  }, [formData.audio128]);
+  }, [formData.audio320]);
 
   const validateForm = () => {
     const newErrors = {};
@@ -85,12 +79,12 @@ const UploadSong = () => {
       newErrors.title = "Song title is required";
     }
 
-    if (!formData.audio128) {
-      newErrors.audio128 = "Audio 128 kbps file is required";
+    if (!formData.audio320) {
+      newErrors.audio320 = "Audio file is required";
     }
 
-    if (formData.audio128 && !formData.duration) {
-      newErrors.audio128 = "Audio duration could not be detected";
+    if (formData.audio320 && !formData.duration) {
+      newErrors.audio320 = "Audio duration could not be detected";
     }
 
     if (!formData.artist) {
@@ -137,10 +131,10 @@ const UploadSong = () => {
     data.append("language", formData.language);
     data.append("lyrics", formData.lyrics || "");
     data.append("isPremiumOnly", String(formData.premium));
-    data.append("audio128", formData.audio128);
+    data.append("featuredArtists", JSON.stringify(formData.featuredArtists));
+    data.append("audio320", formData.audio320);
 
     if (formData.album) data.append("albumId", formData.album);
-    if (formData.audio320) data.append("audio320", formData.audio320);
 
     // Backend Multer expects this field name as "cover"
     if (formData.coverImage) data.append("cover", formData.coverImage);

@@ -22,6 +22,7 @@ import StatusBadge from "../components/common/StatusBadge";
 import Button from "../components/ui/Button";
 
 import playlistService from "../services/playlistService";
+import { formatDuration } from "../utils/time";
 
 const PlaylistDetails = () => {
   const { id } = useParams();
@@ -36,16 +37,6 @@ const PlaylistDetails = () => {
     return new Intl.NumberFormat("en-IN").format(Number(value || 0));
   };
 
-  const formatDuration = (seconds) => {
-    const totalSeconds = Number(seconds || 0);
-
-    if (!totalSeconds) return "0:00";
-
-    const minutes = Math.floor(totalSeconds / 60);
-    const remainingSeconds = Math.floor(totalSeconds % 60);
-
-    return `${minutes}:${remainingSeconds.toString().padStart(2, "0")}`;
-  };
 
   const getArtistName = (song) => {
     return (

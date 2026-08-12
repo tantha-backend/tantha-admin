@@ -1,5 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
+
+import { useMenuPosition } from "../../utils/useMenuPosition";
 import {
   Crown,
   Eye,
@@ -64,8 +66,11 @@ const UserActionMenu = ({
   onToggleStatus,
 }) => {
   const buttonRef = useRef(null);
+  const menuRef = useRef(null);
   const [open, setOpen] = useState(false);
-  const [position, setPosition] = useState({ top: 0, left: 0 });
+
+  // Flips above the button when the row is near the bottom of the window.
+  const position = useMenuPosition(open, buttonRef, menuRef);
 
   const isSuspended = user?.status === "suspended";
 
@@ -75,16 +80,6 @@ const UserActionMenu = ({
 
   const toggleMenu = (event) => {
     event.stopPropagation();
-
-    if (!buttonRef.current) return;
-
-    const rect = buttonRef.current.getBoundingClientRect();
-
-    setPosition({
-      top: rect.bottom + 8,
-      left: Math.max(rect.right - 224, 16),
-    });
-
     setOpen((prev) => !prev);
   };
 
@@ -96,13 +91,9 @@ const UserActionMenu = ({
     };
 
     window.addEventListener("click", handleClose);
-    window.addEventListener("scroll", handleClose, true);
-    window.addEventListener("resize", handleClose);
 
     return () => {
       window.removeEventListener("click", handleClose);
-      window.removeEventListener("scroll", handleClose, true);
-      window.removeEventListener("resize", handleClose);
     };
   }, [open]);
 
@@ -151,11 +142,9 @@ const UserActionMenu = ({
       {open &&
         createPortal(
           <div
+            ref={menuRef}
             className="fixed z-[9999] w-56 overflow-hidden rounded-xl border border-white/10 bg-zinc-950 shadow-2xl shadow-black/60"
-            style={{
-              top: position.top,
-              left: position.left,
-            }}
+            style={position}
             onClick={(event) => event.stopPropagation()}
           >
             {actions.map((action) => {

@@ -19,6 +19,7 @@ import RecentTransactions from "../components/monetization/RecentTransactions";
 import EarningsFilters from "../components/monetization/EarningsFilters";
 
 import monetizationService from "../services/monetizationService";
+import { growthProps } from "../utils/growth";
 
 const Monetization = () => {
   const [loading, setLoading] = useState(true);
@@ -117,7 +118,7 @@ const Monetization = () => {
           title="Total Revenue"
           value={`₹${monetization.totalRevenue || 0}`}
           icon={IndianRupee}
-          change="+15.2%"
+          {...growthProps(monetization.revenueGrowth)}
           description="All monetization sources"
         />
 
@@ -125,7 +126,7 @@ const Monetization = () => {
           title="Premium Revenue"
           value={`₹${monetization.premiumRevenue || 0}`}
           icon={Crown}
-          change="+9.8%"
+          {...growthProps(monetization.premiumGrowth)}
           description="Premium subscriptions"
         />
 
@@ -133,7 +134,7 @@ const Monetization = () => {
           title="Coffee Support"
           value={`₹${monetization.coffeeRevenue || 0}`}
           icon={Coffee}
-          change="+6.4%"
+          {...growthProps(monetization.coffeeGrowth)}
           description="Fan donations"
         />
 
@@ -141,7 +142,7 @@ const Monetization = () => {
           title="Fan Club Revenue"
           value={`₹${monetization.fanClubRevenue || 0}`}
           icon={HeartHandshake}
-          change="+11.7%"
+          {...growthProps(monetization.fanClubGrowth)}
           description="Fan club memberships"
         />
       </div>

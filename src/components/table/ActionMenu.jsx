@@ -1,5 +1,7 @@
-import { useEffect, useLayoutEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
+
+import { useMenuPosition } from "../../utils/useMenuPosition";
 import {
   MoreVertical,
   Eye,
@@ -10,39 +12,15 @@ import {
 } from "lucide-react";
 
 const MENU_WIDTH = 208;
-const MENU_HEIGHT = 248;
-const GAP = 8;
 
 const ActionMenu = ({ onView, onEdit, onAnalytics, onDuplicate, onDelete }) => {
   const [open, setOpen] = useState(false);
-  const [position, setPosition] = useState({
-    top: 0,
-    left: 0,
-  });
 
   const buttonRef = useRef(null);
   const menuRef = useRef(null);
 
-  const updatePosition = () => {
-    if (!buttonRef.current) return;
-
-    const rect = buttonRef.current.getBoundingClientRect();
-
-    const spaceBelow = window.innerHeight - rect.bottom;
-    const openUpward = spaceBelow < MENU_HEIGHT + GAP;
-
-    const top = openUpward
-      ? rect.top + window.scrollY - MENU_HEIGHT - GAP
-      : rect.bottom + window.scrollY + GAP;
-
-    const left = rect.right + window.scrollX - MENU_WIDTH;
-
-    setPosition({ top, left });
-  };
-
-  useLayoutEffect(() => {
-    if (open) updatePosition();
-  }, [open]);
+  // Flips above the button when the row is near the bottom of the window.
+  const position = useMenuPosition(open, buttonRef, menuRef);
 
   useEffect(() => {
     if (!open) return;
@@ -62,20 +40,12 @@ const ActionMenu = ({ onView, onEdit, onAnalytics, onDuplicate, onDelete }) => {
       }
     };
 
-    const handleScrollOrResize = () => {
-      updatePosition();
-    };
-
     document.addEventListener("mousedown", handleClickOutside);
     document.addEventListener("keydown", handleEscape);
-    window.addEventListener("scroll", handleScrollOrResize, true);
-    window.addEventListener("resize", handleScrollOrResize);
 
     return () => {
       document.removeEventListener("mousedown", handleClickOutside);
       document.removeEventListener("keydown", handleEscape);
-      window.removeEventListener("scroll", handleScrollOrResize, true);
-      window.removeEventListener("resize", handleScrollOrResize);
     };
   }, [open]);
 
@@ -87,11 +57,7 @@ const ActionMenu = ({ onView, onEdit, onAnalytics, onDuplicate, onDelete }) => {
   const menu = open ? (
     <div
       ref={menuRef}
-      style={{
-        top: `${position.top}px`,
-        left: `${position.left}px`,
-        width: `${MENU_WIDTH}px`,
-      }}
+      style={{ ...position, width: `${MENU_WIDTH}px` }}
       className="fixed z-[9999] overflow-hidden rounded-xl border border-neutral-800 bg-neutral-950 shadow-2xl"
     >
       <MenuItem

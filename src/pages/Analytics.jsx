@@ -17,6 +17,7 @@ import TopArtistsTable from "../components/analytics/TopArtistsTable";
 import RecentActivity from "../components/analytics/RecentActivity";
 
 import analyticsService from "../services/analyticsService";
+import { growthProps } from "../utils/growth";
 
 const getDaysFromRange = (range) => {
   if (range === "7d") return 7;
@@ -161,6 +162,14 @@ const Analytics = () => {
           overview.revenue ||
           0,
 
+        streamGrowth: overview.streamGrowth,
+        songGrowth: overview.songGrowth,
+        userGrowth: overview.userGrowth,
+
+        // Revenue growth is owned by the monetization endpoints; when the
+        // analytics revenue source doesn't carry it the card omits the badge.
+        revenueGrowth: revenue.revenueGrowth,
+
         streamChart: normalizeArray(
           charts.streams ||
             charts.streamChart ||
@@ -277,7 +286,7 @@ const Analytics = () => {
           title="Total Streams"
           value={analytics.totalStreams || 0}
           icon={Activity}
-          change="+12.8%"
+          {...growthProps(analytics.streamGrowth)}
           description="Across all songs"
         />
 
@@ -285,7 +294,7 @@ const Analytics = () => {
           title="Total Songs"
           value={analytics.totalSongs || 0}
           icon={Music2}
-          change="+6.1%"
+          {...growthProps(analytics.songGrowth)}
           description="Published songs"
         />
 
@@ -293,7 +302,7 @@ const Analytics = () => {
           title="Active Users"
           value={analytics.activeUsers || 0}
           icon={Users}
-          change="+8.4%"
+          {...growthProps(analytics.userGrowth)}
           description="Monthly listeners"
         />
 
@@ -301,7 +310,7 @@ const Analytics = () => {
           title="Revenue"
           value={`₹${analytics.revenue || 0}`}
           icon={IndianRupee}
-          change="+15.2%"
+          {...growthProps(analytics.revenueGrowth)}
           description="Platform earnings"
         />
       </div>

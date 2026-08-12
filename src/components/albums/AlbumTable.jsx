@@ -1,5 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
+
+import { useMenuPosition } from "../../utils/useMenuPosition";
 import {
   Eye,
   Pencil,
@@ -21,26 +23,15 @@ const AlbumActionMenu = ({
   onUnpublish,
 }) => {
   const buttonRef = useRef(null);
+  const menuRef = useRef(null);
   const [open, setOpen] = useState(false);
-  const [position, setPosition] = useState({
-    top: 0,
-    left: 0,
-  });
+
+  // Flips above the button when the row is near the bottom of the window.
+  const position = useMenuPosition(open, buttonRef, menuRef);
 
   const closeMenu = () => setOpen(false);
 
-  const openMenu = () => {
-    if (!buttonRef.current) return;
-
-    const rect = buttonRef.current.getBoundingClientRect();
-
-    setPosition({
-      top: rect.bottom + 8,
-      left: rect.right - 192,
-    });
-
-    setOpen((prev) => !prev);
-  };
+  const openMenu = () => setOpen((prev) => !prev);
 
   useEffect(() => {
     if (!open) return;
@@ -59,15 +50,13 @@ const AlbumActionMenu = ({
       }
     };
 
+    // Scroll and resize reposition the menu rather than closing it — that is
+    // handled by useMenuPosition.
     window.addEventListener("click", handleClickOutside);
-    window.addEventListener("scroll", closeMenu, true);
-    window.addEventListener("resize", closeMenu);
     window.addEventListener("keydown", handleEscape);
 
     return () => {
       window.removeEventListener("click", handleClickOutside);
-      window.removeEventListener("scroll", closeMenu, true);
-      window.removeEventListener("resize", closeMenu);
       window.removeEventListener("keydown", handleEscape);
     };
   }, [open]);
@@ -119,11 +108,9 @@ const AlbumActionMenu = ({
       {open &&
         createPortal(
           <div
+            ref={menuRef}
             className="fixed z-[9999] w-48 overflow-hidden rounded-xl border border-white/10 bg-zinc-950 shadow-2xl shadow-black/60"
-            style={{
-              top: position.top,
-              left: position.left,
-            }}
+            style={position}
             onClick={(event) => event.stopPropagation()}
           >
             {menuItems.map((item, index) => {

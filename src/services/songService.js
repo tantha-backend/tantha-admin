@@ -16,6 +16,23 @@ const songService = {
     return res.data;
   },
 
+  // Admin view returns unpublished songs too, which the public route hides.
+  getAdminSongById: async (id) => {
+    const res = await api.get(`/admin/songs/${id}`);
+    return res.data;
+  },
+
+  updateSong: async (id, formData, onUploadProgress) => {
+    const res = await api.put(`/admin/songs/${id}`, formData, {
+      headers: {
+        "Content-Type": "multipart/form-data",
+      },
+      onUploadProgress,
+    });
+
+    return res.data;
+  },
+
   uploadSong: async (formData, onUploadProgress) => {
     const res = await api.post("/admin/songs/create", formData, {
       headers: {

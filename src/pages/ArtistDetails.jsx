@@ -4,6 +4,7 @@ import {
   BadgeCheck,
   Coffee,
   Edit,
+  ExternalLink,
   Mail,
   Music4,
   ShieldCheck,
@@ -15,6 +16,7 @@ import { useNavigate, useParams } from "react-router-dom";
 
 import Button from "../components/ui/Button";
 import artistService from "../services/artistService";
+import { formatDuration } from "../utils/time";
 
 const formatNumber = (value) => {
   if (!value) return "0";
@@ -31,15 +33,6 @@ const formatDate = (date) => {
   });
 };
 
-const formatDuration = (duration) => {
-  if (!duration) return "0:00";
-
-  const totalSeconds = Number(duration);
-  const minutes = Math.floor(totalSeconds / 60);
-  const seconds = totalSeconds % 60;
-
-  return `${minutes}:${seconds.toString().padStart(2, "0")}`;
-};
 
 const StatCard = ({ title, value, subtitle, icon: Icon, color }) => (
   <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-5">
@@ -173,6 +166,24 @@ function ArtistDetails() {
 
   const user = artist.userId || {};
 
+  // Only the platforms this artist actually filled in.
+  const socialLinks = [
+    { platform: "facebook", label: "Facebook" },
+    { platform: "instagram", label: "Instagram" },
+    { platform: "youtube", label: "YouTube" },
+    { platform: "spotify", label: "Spotify" },
+  ]
+    .map((entry) => ({
+      ...entry,
+      url: (artist.socialLinks?.[entry.platform] || "").trim(),
+    }))
+    .filter((entry) => entry.url)
+    // A pasted handle like "instagram.com/name" still needs a scheme to open.
+    .map((entry) => ({
+      ...entry,
+      url: /^https?:\/\//i.test(entry.url) ? entry.url : `https://${entry.url}`,
+    }));
+
   return (
     <div className="space-y-6">
       <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
@@ -247,6 +258,23 @@ function ArtistDetails() {
           <p className="mt-6 max-w-4xl text-sm leading-6 text-white/60">
             {artist.bio || "No biography added yet."}
           </p>
+
+          {socialLinks.length > 0 && (
+            <div className="mt-5 flex flex-wrap gap-2">
+              {socialLinks.map(({ platform, label, url }) => (
+                <a
+                  key={platform}
+                  href={url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-2 rounded-full border border-white/10 bg-black px-4 py-2 text-sm text-white/70 transition hover:border-pink-500/50 hover:text-white"
+                >
+                  <ExternalLink size={14} />
+                  {label}
+                </a>
+              ))}
+            </div>
+          )}
         </div>
       </div>
 

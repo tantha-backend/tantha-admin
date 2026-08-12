@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import toast from "react-hot-toast";
 import artistService from "../../services/artistService";
 import albumService from "../../services/albumService";
+import { formatDuration } from "../../utils/time";
 
 const genres = [
   "Pop",
@@ -108,6 +109,30 @@ const SongInformationForm = ({
     );
   }, [albums, formData.artist]);
 
+  const featuredIds = useMemo(
+    () => formData.featuredArtists || [],
+    [formData.featuredArtists],
+  );
+
+  // The main artist is credited separately, so never offer them as a feature.
+  const featuredOptions = useMemo(
+    () => artists.filter((artist) => artist._id !== formData.artist),
+    [artists, formData.artist],
+  );
+
+  const toggleFeatured = (artistId) => {
+    setFormData((prev) => {
+      const current = prev.featuredArtists || [];
+
+      return {
+        ...prev,
+        featuredArtists: current.includes(artistId)
+          ? current.filter((id) => id !== artistId)
+          : [...current, artistId],
+      };
+    });
+  };
+
   const handleChange = (e) => {
     const { name, value } = e.target;
 
@@ -120,6 +145,10 @@ const SongInformationForm = ({
         ...prev,
         artist: value,
         album: "",
+        // Drop the new main artist from the feature list if they were on it.
+        featuredArtists: (prev.featuredArtists || []).filter(
+          (id) => id !== value,
+        ),
       }));
 
       return;
@@ -172,13 +201,13 @@ const SongInformationForm = ({
 
           <div
             className={`flex min-h-[50px] items-center rounded-xl border bg-black px-4 py-3 transition ${
-              errors.audio128 ? "border-red-500" : "border-zinc-800"
+              errors.audio320 ? "border-red-500" : "border-zinc-800"
             }`}
           >
             {formData.duration ? (
               <div>
                 <p className="text-sm font-medium text-white">
-                  {formData.duration}
+                  {formatDuration(formData.duration)}
                 </p>
                 <p className="mt-0.5 text-xs text-zinc-500">
                   Automatically detected from audio file
@@ -191,7 +220,7 @@ const SongInformationForm = ({
             )}
           </div>
 
-          <ErrorText message={errors.audio128} />
+          <ErrorText message={errors.audio320} />
         </div>
 
         <div>
@@ -216,6 +245,47 @@ const SongInformationForm = ({
           </select>
 
           <ErrorText message={errors.artist} />
+        </div>
+
+        <div className="md:col-span-2">
+          <label className="mb-2 block text-sm text-zinc-300">
+            Featured Artists
+          </label>
+
+          <p className="mb-3 text-xs text-zinc-500">
+            Everyone else who sang on this track. Shown as “feat.” and the song
+            appears on their artist page too.
+          </p>
+
+          {featuredOptions.length === 0 ? (
+            <p className="rounded-xl border border-zinc-800 bg-black px-4 py-3 text-sm text-zinc-500">
+              {formData.artist
+                ? "No other artists available."
+                : "Select the main artist first."}
+            </p>
+          ) : (
+            <div className="flex flex-wrap gap-2">
+              {featuredOptions.map((artist) => {
+                const selected = featuredIds.includes(artist._id);
+
+                return (
+                  <button
+                    key={artist._id}
+                    type="button"
+                    onClick={() => toggleFeatured(artist._id)}
+                    className={`rounded-full border px-4 py-2 text-sm transition ${
+                      selected
+                        ? "border-pink-500 bg-pink-500/15 text-pink-300"
+                        : "border-zinc-800 bg-black text-zinc-400 hover:border-zinc-700 hover:text-zinc-200"
+                    }`}
+                  >
+                    {selected ? "✓ " : "+ "}
+                    {artistLabel(artist)}
+                  </button>
+                );
+              })}
+            </div>
+          )}
         </div>
 
         <div>
