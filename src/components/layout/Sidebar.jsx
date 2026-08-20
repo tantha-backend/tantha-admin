@@ -10,15 +10,19 @@ import {
   Wallet,
   BarChart3,
   Settings,
+  Tags,
+  Megaphone,
 } from "lucide-react";
 
 const menu = [
   ["Dashboard", "/dashboard", LayoutDashboard],
   ["Songs", "/songs", Music],
+  ["Tag Songs", "/songs/tag", Tags],
   ["Albums", "/albums", Disc3],
   ["Artists", "/artists", Mic2],
   ["Playlists", "/playlists", ListMusic],
   ["Approvals", "/approvals", ShieldCheck],
+  ["Announcements", "/announcements", Megaphone],
   ["Users", "/users", Users],
   ["Monetization", "/monetization", Wallet],
   ["Analytics", "/analytics", BarChart3],

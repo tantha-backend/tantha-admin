@@ -9,6 +9,8 @@ import Dashboard from "./pages/Dashboard";
 import Songs from "./pages/Songs";
 import UploadSong from "./pages/UploadSong";
 import EditSong from "./pages/EditSong";
+import TagSongs from "./pages/TagSongs";
+import Announcements from "./pages/Announcements";
 import Approvals from "./pages/Approvals";
 
 import Artists from "./pages/Artists";
@@ -55,6 +57,8 @@ const App = () => {
 
           <Route path="songs" element={<Songs />} />
           <Route path="songs/upload" element={<UploadSong />} />
+          <Route path="songs/tag" element={<TagSongs />} />
+          <Route path="announcements" element={<Announcements />} />
           <Route path="songs/:id/edit" element={<EditSong />} />
           <Route path="approvals" element={<Approvals />} />
 

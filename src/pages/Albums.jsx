@@ -42,6 +42,17 @@ function Albums() {
 
   const pageSize = 10;
 
+  /**
+   * Narrowing the list has to send you back to the first page.
+   *
+   * Filtering while on page 3 leaves the slice past the end of the results,
+   * so the table shows nothing — and the pagination control hides itself once
+   * there is only one page, leaving no way back.
+   */
+  useEffect(() => {
+    setPage(1);
+  }, [search, statusFilter, artistFilter]);
+
   const loadData = async () => {
     try {
       setLoading(true);
@@ -176,7 +187,7 @@ function Albums() {
             />
 
             <Pagination
-              currentPage={page}
+              page={page}
               totalPages={totalPages}
               onPageChange={setPage}
             />

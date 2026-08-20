@@ -60,7 +60,19 @@ const songService = {
   },
 
   searchSongs: async (query) => {
-    const res = await api.get(`/songs/search?q=${query}`);
+    const res = await api.get(`/songs/search?q=${encodeURIComponent(query)}`);
+    return res.data;
+  },
+
+  // The tag vocabulary and how much of the catalogue is done.
+  getTagOptions: async () => {
+    const res = await api.get("/admin/songs/tag-options");
+    return res.data;
+  },
+
+  // Applies many songs' tags in one request; see the tagging screen.
+  bulkTagSongs: async (updates) => {
+    const res = await api.put("/admin/songs/tags", { updates });
     return res.data;
   },
 };

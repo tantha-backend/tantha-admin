@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { ArrowLeft, Edit, Trash2 } from "lucide-react";
+import { ArrowLeft, Copy, Edit, KeyRound, Trash2 } from "lucide-react";
 import { toast } from "react-hot-toast";
 
 import Button from "../components/ui/Button";
@@ -79,6 +79,9 @@ const UserDetails = () => {
 
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [deleting, setDeleting] = useState(false);
+
+  // Held only for as long as the page is open — the server cannot show it again.
+  const [resetLink, setResetLink] = useState("");
 
   const isSuspended = user?.status === "suspended";
 
@@ -179,6 +182,42 @@ const UserDetails = () => {
       );
     } finally {
       setActionLoading(false);
+    }
+  };
+
+  /**
+   * Mints a reset link for this account and shows it.
+   *
+   * The import created an artist login per performer with a random password
+   * nobody knows, and there is no mail provider yet — so this is how an
+   * artist is handed their account. Only the hash is stored, so the link
+   * shown here cannot be recovered afterwards; generating another one
+   * invalidates this.
+   */
+  const handleCreateResetLink = async () => {
+    if (!user?._id) return;
+
+    try {
+      setActionLoading(true);
+
+      const res = await userService.createResetLink(user._id);
+      setResetLink(res?.resetUrl || "");
+
+      toast.success("Reset link created — copy it now");
+    } catch (error) {
+      console.error(error);
+      toast.error(error?.response?.data?.message || "Failed to create a reset link");
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  const copyResetLink = async () => {
+    try {
+      await navigator.clipboard.writeText(resetLink);
+      toast.success("Copied");
+    } catch {
+      toast.error("Could not copy — select the text and copy it manually");
     }
   };
 
@@ -379,10 +418,46 @@ const UserDetails = () => {
             {isSuspended ? "Activate User" : "Suspend User"}
           </Button>
 
+          <Button
+            variant="secondary"
+            disabled={actionLoading}
+            onClick={handleCreateResetLink}
+          >
+            <span className="flex items-center gap-2">
+              <KeyRound size={16} /> Create Reset Link
+            </span>
+          </Button>
+
           <Button variant="danger" onClick={() => setDeleteModalOpen(true)}>
             Delete User
           </Button>
         </div>
+
+        {resetLink ? (
+          <div className="mt-4 rounded-xl border border-pink-500/40 bg-pink-500/[0.04] p-4">
+            <p className="text-sm font-medium text-white">
+              One-time reset link — copy it now
+            </p>
+            <p className="mt-1 text-xs text-white/50">
+              Shown only once and valid for 1 hour. Send it to {user.name} yourself;
+              no mail provider is configured. Making another link cancels this one.
+            </p>
+
+            <div className="mt-3 flex items-center gap-2">
+              <input
+                readOnly
+                value={resetLink}
+                onFocus={(e) => e.target.select()}
+                className="w-full rounded-lg border border-white/10 bg-black px-3 py-2 font-mono text-xs text-white outline-none"
+              />
+              <Button variant="secondary" onClick={copyResetLink}>
+                <span className="flex items-center gap-2">
+                  <Copy size={14} /> Copy
+                </span>
+              </Button>
+            </div>
+          </div>
+        ) : null}
       </SectionCard>
 
       <DeleteUserModal

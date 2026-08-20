@@ -5,6 +5,7 @@ import toast from "react-hot-toast";
 
 import PageHeader from "../components/common/PageHeader";
 import SectionCard from "../components/common/SectionCard";
+import SearchBar from "../components/common/SearchBar";
 import Button from "../components/ui/Button";
 
 import playlistService from "../services/playlistService";
@@ -17,6 +18,8 @@ const CreatePlaylist = () => {
   const [songsLoading, setSongsLoading] = useState(true);
   const [songs, setSongs] = useState([]);
   const [selectedSongs, setSelectedSongs] = useState([]);
+  const [songSearch, setSongSearch] = useState("");
+  const [showSelectedOnly, setShowSelectedOnly] = useState(false);
 
   const [formData, setFormData] = useState({
     title: "",
@@ -61,6 +64,41 @@ const CreatePlaylist = () => {
       if (coverPreview) URL.revokeObjectURL(coverPreview);
     };
   }, [coverPreview]);
+
+  /**
+   * Narrows the picker by title, artist, genre or language.
+   *
+   * A playlist is built from a catalogue of hundreds, so scrolling the whole
+   * list to find one track was the only way to add it. Filtering happens on
+   * the songs already loaded, so typing costs no requests.
+   */
+  const visibleSongs = useMemo(() => {
+    const keyword = songSearch.trim().toLowerCase();
+
+    return songs.filter((song) => {
+      if (showSelectedOnly && !selectedSongs.includes(song._id)) return false;
+      if (!keyword) return true;
+
+      const credit = [
+        song?.artistId?.stageName,
+        song?.artistId?.artistName,
+        song?.artistId?.name,
+        ...(song?.featuredArtists || []).map(
+          (a) => a?.stageName || a?.artistName || a?.name,
+        ),
+      ]
+        .filter(Boolean)
+        .join(" ")
+        .toLowerCase();
+
+      return (
+        song?.title?.toLowerCase().includes(keyword) ||
+        credit.includes(keyword) ||
+        song?.genre?.toLowerCase().includes(keyword) ||
+        song?.language?.toLowerCase().includes(keyword)
+      );
+    });
+  }, [songs, songSearch, showSelectedOnly, selectedSongs]);
 
   const toggleSong = (songId) => {
     setSelectedSongs((current) => {
@@ -280,8 +318,45 @@ const CreatePlaylist = () => {
             <p className="text-sm text-white/50">No songs available.</p>
           </div>
         ) : (
+          <>
+            <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+              <SearchBar
+                value={songSearch}
+                onChange={setSongSearch}
+                onClear={() => setSongSearch("")}
+                placeholder="Search songs, artists, genre..."
+              />
+
+              <div className="flex items-center gap-3">
+                <button
+                  type="button"
+                  onClick={() => setShowSelectedOnly((v) => !v)}
+                  className={`rounded-xl border px-4 py-2 text-sm transition ${
+                    showSelectedOnly
+                      ? "border-pink-500 text-white"
+                      : "border-white/10 text-white/60 hover:text-white"
+                  }`}
+                >
+                  Selected ({selectedSongs.length})
+                </button>
+
+                <span className="text-xs text-white/40">
+                  {visibleSongs.length} of {songs.length}
+                </span>
+              </div>
+            </div>
+
+            {visibleSongs.length === 0 ? (
+              <div className="rounded-xl border border-white/10 bg-black p-6 text-center">
+                <p className="text-sm text-white/50">
+                  {showSelectedOnly
+                    ? "No songs selected yet."
+                    : `No songs match "${songSearch.trim()}".`}
+                </p>
+              </div>
+            ) : (
           <div className="max-h-[420px] overflow-y-auto rounded-2xl border border-white/10 bg-black/40">
-            {songs.map((song) => (
+            {visibleSongs.map((song) => (
               <label
                 key={song._id}
                 className="flex cursor-pointer items-center gap-4 border-b border-white/10 p-4 last:border-b-0 hover:bg-white/[0.03]"
@@ -314,6 +389,8 @@ const CreatePlaylist = () => {
               </label>
             ))}
           </div>
+            )}
+          </>
         )}
       </SectionCard>
 

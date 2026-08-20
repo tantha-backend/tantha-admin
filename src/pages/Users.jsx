@@ -268,7 +268,7 @@ const Users = () => {
 
           {totalPages > 1 && (
             <Pagination
-              currentPage={currentPage}
+              page={currentPage}
               totalPages={totalPages}
               onPageChange={setCurrentPage}
             />

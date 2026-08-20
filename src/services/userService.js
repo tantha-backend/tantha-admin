@@ -45,6 +45,17 @@ const userService = {
     const res = await api.get(`/admin/users/${id}/analytics`);
     return res.data;
   },
+
+  /**
+   * Mints a one-time password-reset link for this account.
+   *
+   * The response is the only time the link is visible — only its hash is
+   * stored — so the caller has to show it to the admin right away.
+   */
+  createResetLink: async (id) => {
+    const res = await api.post(`/admin/users/${id}/reset-link`);
+    return res.data;
+  },
 };
 
 export default userService;
