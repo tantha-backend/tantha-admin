@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
 
 import api from "../api/api";
+import GoogleSignInButton from "../components/auth/GoogleSignInButton";
 
 function Login() {
   const navigate = useNavigate();
@@ -21,34 +22,56 @@ function Login() {
     });
   };
 
+  /**
+   * Shared by both ways in, so the admin check cannot be enforced on one and
+   * forgotten on the other.
+   *
+   * Signing in only establishes who someone is. Whether they may run the
+   * dashboard is decided by the role on their account — and the server checks
+   * it again on every admin route, so this is a courteous door rather than
+   * the lock itself.
+   */
+  const acceptSession = (res) => {
+    const token = res.data?.token;
+    const user = res.data?.user;
+
+    if (!token || !user) {
+      toast.error("Invalid login response.");
+      return;
+    }
+
+    if (user.role !== "admin") {
+      toast.error("Unauthorized. Admin access only.");
+      return;
+    }
+
+    localStorage.setItem("token", token);
+    localStorage.setItem("user", JSON.stringify(user));
+
+    toast.success("Login successful.");
+
+    navigate("/dashboard", { replace: true });
+  };
+
   const handleLogin = async (event) => {
     event.preventDefault();
 
     try {
       setLoading(true);
-
-      const res = await api.post("/auth/login", form);
-      const token = res.data?.token;
-      const user = res.data?.user;
-
-      if (!token || !user) {
-        toast.error("Invalid login response.");
-        return;
-      }
-
-      if (user.role !== "admin") {
-        toast.error("Unauthorized. Admin access only.");
-        return;
-      }
-
-      localStorage.setItem("token", token);
-      localStorage.setItem("user", JSON.stringify(user));
-
-      toast.success("Login successful.");
-
-      navigate("/dashboard", { replace: true });
+      acceptSession(await api.post("/auth/login", form));
     } catch (error) {
       toast.error(error.response?.data?.message || "Login failed.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleGoogle = async (idToken) => {
+    try {
+      setLoading(true);
+      acceptSession(await api.post("/auth/google", { idToken }));
+    } catch (error) {
+      toast.error(error.response?.data?.message || "Google sign-in failed.");
     } finally {
       setLoading(false);
     }
@@ -102,6 +125,18 @@ function Login() {
             {loading ? "Logging in..." : "Login"}
           </button>
         </form>
+
+        <div className="my-6 flex items-center gap-3">
+          <span className="h-px flex-1 bg-white/10" />
+          <span className="text-xs uppercase tracking-wider text-white/40">or</span>
+          <span className="h-px flex-1 bg-white/10" />
+        </div>
+
+        <GoogleSignInButton
+          onToken={handleGoogle}
+          onError={(message) => toast.error(message)}
+          disabled={loading}
+        />
       </div>
     </div>
   );

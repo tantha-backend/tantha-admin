@@ -22,3 +22,8 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Local configuration. Client IDs are public, but this is the file that
+# quietly acquires secrets later, so it stays out of the repository.
+.env
+.env.production
