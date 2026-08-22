@@ -23,7 +23,10 @@ dist-ssr
 *.sln
 *.sw?
 
-# Local configuration. Client IDs are public, but this is the file that
-# quietly acquires secrets later, so it stays out of the repository.
+# Local developer configuration only. The deployed settings live in
+# .env.production, which IS tracked: Vite bakes it in at build time, so a
+# build without it ships a dashboard that cannot reach the API.
+#
+# Nothing secret belongs in either. If that ever changes, the value goes in
+# Railway's variables instead, not here.
 .env
-.env.production
