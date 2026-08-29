@@ -6,6 +6,7 @@ import {
   Settings as SettingsIcon,
   Shield,
   SlidersHorizontal,
+  Smartphone,
   Upload,
   Wrench,
   Zap,
@@ -25,6 +26,7 @@ import EmailSettings from "../components/settings/EmailSettings";
 import StreamingSettings from "../components/settings/StreamingSettings";
 import UploadSettings from "../components/settings/UploadSettings";
 import MaintenanceMode from "../components/settings/MaintenanceMode";
+import AppVersionSettings from "../components/settings/AppVersionSettings";
 
 import settingsService from "../services/settingsService";
 
@@ -114,6 +116,15 @@ const defaultSettings = {
     endTime: "",
     accessMode: "Admins Only",
   },
+  appVersion: {
+    enabled: true,
+    latest: "",
+    minimumSupported: "",
+    requiredMessage: "",
+    optionalMessage: "",
+    storeUrlAndroid: "",
+    storeUrlIos: "",
+  },
 };
 
 const Settings = () => {
@@ -170,6 +181,10 @@ const Settings = () => {
           startTime: backendSettings.maintenance?.startTime || "",
           endTime: backendSettings.maintenance?.endTime || "",
         },
+        appVersion: {
+          ...defaultSettings.appVersion,
+          ...backendSettings.appVersion,
+        },
       });
     } catch (error) {
       console.error("Failed to load settings:", error);
@@ -209,6 +224,7 @@ const Settings = () => {
         streaming: settingsService.updateStreamingSettings,
         uploads: settingsService.updateUploadSettings,
         maintenance: settingsService.updateMaintenanceMode,
+        appVersion: settingsService.updateAppVersion,
       };
 
       const saveFunction = saveMap[section];
@@ -361,6 +377,21 @@ const Settings = () => {
             }
             onSave={() => saveSection("maintenance")}
             saving={savingSection === "maintenance"}
+          />
+        ),
+      },
+      {
+        id: "appVersion",
+        label: "App version",
+        icon: Smartphone,
+        component: (
+          <AppVersionSettings
+            settings={settings.appVersion}
+            onChange={(field, value) =>
+              updateSection("appVersion", field, value)
+            }
+            onSave={() => saveSection("appVersion")}
+            saving={savingSection === "appVersion"}
           />
         ),
       },

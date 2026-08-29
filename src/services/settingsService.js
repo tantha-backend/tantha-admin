@@ -51,6 +51,11 @@ const settingsService = {
     return res.data;
   },
 
+  updateAppVersion: async (payload) => {
+    const { data } = await api.put("/admin/settings/app-version", payload);
+    return data;
+  },
+
   resetSettings: async () => {
     const res = await api.post("/admin/settings/reset");
     return res.data;
