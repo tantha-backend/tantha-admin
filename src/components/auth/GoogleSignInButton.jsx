@@ -52,8 +52,15 @@ function GoogleSignInButton({ onToken, onError, disabled }) {
 
   // Held in a ref so re-rendering the parent cannot leave Google calling an
   // old handler, which is easy to do when the callback is registered once.
+  //
+  // Assigned in an effect rather than during render: a render can be thrown
+  // away and re-run, and mutating the ref on the way past would leave Google
+  // holding a handler from a render that never happened.
   const handler = useRef(onToken);
-  handler.current = onToken;
+
+  useEffect(() => {
+    handler.current = onToken;
+  }, [onToken]);
 
   useEffect(() => {
     if (!CLIENT_ID) {
