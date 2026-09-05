@@ -37,6 +37,7 @@ const Badge = ({ children, variant = "default" }) => {
   const variants = {
     user: "border-blue-500/30 bg-blue-500/10 text-blue-300",
     artist: "border-purple-500/30 bg-purple-500/10 text-purple-300",
+    editor: "border-teal-500/30 bg-teal-500/10 text-teal-300",
     admin: "border-red-500/30 bg-red-500/10 text-red-300",
     premium: "border-yellow-500/30 bg-yellow-500/10 text-yellow-300",
     free: "border-zinc-500/30 bg-zinc-500/10 text-zinc-300",

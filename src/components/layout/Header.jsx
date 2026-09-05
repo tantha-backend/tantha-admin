@@ -12,6 +12,7 @@ import { useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
 
 import notificationService from "../../services/notificationService";
+import { roleLabel as roleLabelFor } from "../../utils/permissions";
 
 function Header() {
   const navigate = useNavigate();
@@ -36,8 +37,7 @@ function Header() {
   const displayName =
     user?.name || user?.fullName || user?.artistName || "Admin User";
 
-  const roleLabel =
-    user?.role === "admin" ? "Super Admin" : user?.role || "Admin";
+  const roleLabel = roleLabelFor(user);
 
   const email = user?.email || "admin@tanthamusic.com";
   const userId = user?._id || user?.id || "N/A";

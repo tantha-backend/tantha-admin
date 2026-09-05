@@ -4,6 +4,7 @@ import toast from "react-hot-toast";
 
 import api from "../api/api";
 import GoogleSignInButton from "../components/auth/GoogleSignInButton";
+import { isStaff } from "../utils/permissions";
 
 function Login() {
   const navigate = useNavigate();
@@ -40,8 +41,8 @@ function Login() {
       return;
     }
 
-    if (user.role !== "admin") {
-      toast.error("Unauthorized. Admin access only.");
+    if (!isStaff(user)) {
+      toast.error("Unauthorized. Staff access only.");
       return;
     }
 

@@ -14,22 +14,31 @@ import {
   Megaphone,
 } from "lucide-react";
 
+import { currentUser, isAdmin } from "../../utils/permissions";
+
+/**
+ * The fourth entry says who may see the item. Editors get the three things
+ * they were hired for; everything else is the owner's business.
+ */
 const menu = [
-  ["Dashboard", "/dashboard", LayoutDashboard],
-  ["Songs", "/songs", Music],
-  ["Tag Songs", "/songs/tag", Tags],
-  ["Albums", "/albums", Disc3],
-  ["Artists", "/artists", Mic2],
-  ["Playlists", "/playlists", ListMusic],
-  ["Approvals", "/approvals", ShieldCheck],
-  ["Announcements", "/announcements", Megaphone],
-  ["Users", "/users", Users],
-  ["Monetization", "/monetization", Wallet],
-  ["Analytics", "/analytics", BarChart3],
-  ["Settings", "/settings", Settings],
+  ["Dashboard", "/dashboard", LayoutDashboard, "all"],
+  ["Songs", "/songs", Music, "all"],
+  ["Approvals", "/approvals", ShieldCheck, "all"],
+  ["Tag Songs", "/songs/tag", Tags, "admin"],
+  ["Albums", "/albums", Disc3, "admin"],
+  ["Artists", "/artists", Mic2, "admin"],
+  ["Playlists", "/playlists", ListMusic, "admin"],
+  ["Announcements", "/announcements", Megaphone, "admin"],
+  ["Users", "/users", Users, "admin"],
+  ["Monetization", "/monetization", Wallet, "admin"],
+  ["Analytics", "/analytics", BarChart3, "admin"],
+  ["Settings", "/settings", Settings, "admin"],
 ];
 
 function Sidebar() {
+  const user = currentUser();
+  const visible = menu.filter(([, , , who]) => who === "all" || isAdmin(user));
+
   return (
     <aside className="hidden min-h-screen w-60 shrink-0 border-r border-white/10 bg-black px-5 py-7 lg:block">
       <div className="mb-10">
@@ -41,7 +50,7 @@ function Sidebar() {
       </div>
 
       <nav className="space-y-1">
-        {menu.map(([label, path, Icon]) => (
+        {visible.map(([label, path, Icon]) => (
           <NavLink
             key={label}
             to={path}

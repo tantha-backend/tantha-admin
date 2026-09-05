@@ -35,6 +35,9 @@ import Analytics from "./pages/Analytics";
 import Monetization from "./pages/Monetization";
 import Settings from "./pages/Settings";
 
+/** Shorthand so the admin-only routes below read as a list, not a wall. */
+const ADMIN = (page) => <ProtectedRoute roles={["admin"]}>{page}</ProtectedRoute>;
+
 const App = () => {
   return (
     <>
@@ -53,37 +56,43 @@ const App = () => {
         >
           <Route index element={<Navigate to="/dashboard" replace />} />
 
+          {/* Open to every staff member. */}
           <Route path="dashboard" element={<Dashboard />} />
-
           <Route path="songs" element={<Songs />} />
           <Route path="songs/upload" element={<UploadSong />} />
-          <Route path="songs/tag" element={<TagSongs />} />
-          <Route path="announcements" element={<Announcements />} />
           <Route path="songs/:id/edit" element={<EditSong />} />
           <Route path="approvals" element={<Approvals />} />
 
-          <Route path="artists" element={<Artists />} />
-          <Route path="artists/create" element={<CreateArtist />} />
-          <Route path="artists/:id" element={<ArtistDetails />} />
-          <Route path="artists/:id/edit" element={<EditArtist />} />
+          {/*
+            Admin only. Wrapped rather than hidden, because hiding a link
+            does not stop anyone typing the address — and an editor who lands
+            here would otherwise get a page of controls the server refuses.
+          */}
+          <Route path="songs/tag" element={ADMIN(<TagSongs />)} />
+          <Route path="announcements" element={ADMIN(<Announcements />)} />
 
-          <Route path="albums" element={<Albums />} />
-          <Route path="albums/create" element={<CreateAlbum />} />
-          <Route path="albums/:id" element={<AlbumDetails />} />
-          <Route path="albums/:id/edit" element={<EditAlbum />} />
+          <Route path="artists" element={ADMIN(<Artists />)} />
+          <Route path="artists/create" element={ADMIN(<CreateArtist />)} />
+          <Route path="artists/:id" element={ADMIN(<ArtistDetails />)} />
+          <Route path="artists/:id/edit" element={ADMIN(<EditArtist />)} />
 
-          <Route path="users" element={<Users />} />
-          <Route path="users/create" element={<CreateUser />} />
-          <Route path="users/:id" element={<UserDetails />} />
-          <Route path="users/:id/edit" element={<EditUser />} />
+          <Route path="albums" element={ADMIN(<Albums />)} />
+          <Route path="albums/create" element={ADMIN(<CreateAlbum />)} />
+          <Route path="albums/:id" element={ADMIN(<AlbumDetails />)} />
+          <Route path="albums/:id/edit" element={ADMIN(<EditAlbum />)} />
 
-          <Route path="playlists" element={<Playlists />} />
-          <Route path="playlists/create" element={<CreatePlaylist />} />
-          <Route path="playlists/:id" element={<PlaylistDetails />} />
+          <Route path="users" element={ADMIN(<Users />)} />
+          <Route path="users/create" element={ADMIN(<CreateUser />)} />
+          <Route path="users/:id" element={ADMIN(<UserDetails />)} />
+          <Route path="users/:id/edit" element={ADMIN(<EditUser />)} />
 
-          <Route path="analytics" element={<Analytics />} />
-          <Route path="monetization" element={<Monetization />} />
-          <Route path="settings" element={<Settings />} />
+          <Route path="playlists" element={ADMIN(<Playlists />)} />
+          <Route path="playlists/create" element={ADMIN(<CreatePlaylist />)} />
+          <Route path="playlists/:id" element={ADMIN(<PlaylistDetails />)} />
+
+          <Route path="analytics" element={ADMIN(<Analytics />)} />
+          <Route path="monetization" element={ADMIN(<Monetization />)} />
+          <Route path="settings" element={ADMIN(<Settings />)} />
         </Route>
       </Routes>
     </>
